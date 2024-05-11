@@ -1,34 +1,30 @@
 pipeline {
     agent any
 
+    environment {
+        MAVEN_HOME = '/path/to/your/maven/apache-maven-3.9.6' // Specify the Maven installation directory
+        PATH = "${MAVEN_HOME}/bin:${env.PATH}"
+    }
+
     stages {
         stage('Clean') {
             steps {
-                // Run 'mvn clean' using specified Maven installation
-                script {
-                    tool 'maven_3_9_6'
-                    sh 'mvn clean'
-                }
+                // Run 'mvn clean'
+                sh 'mvn clean'
             }
         }
 
         stage('Test') {
             steps {
-                // Run 'mvn test' using specified Maven installation
-                script {
-                    tool 'maven_3_9_6'
-                    sh 'mvn test'
-                }
+                // Run 'mvn test'
+                sh 'mvn test'
             }
         }
 
         stage('Install') {
             steps {
-                // Run 'mvn install' using specified Maven installation
-                script {
-                    tool 'maven_3_9_6'
-                    sh 'mvn install'
-                }
+                // Run 'mvn install'
+                sh 'mvn install'
             }
         }
 
@@ -43,11 +39,9 @@ pipeline {
             steps {
                 // Transfer artifacts to FTP server
                 script {
-                    tool 'maven_3_9_6'
                     sh 'mvn deploy'
                 }
             }
         }
     }
 }
-
