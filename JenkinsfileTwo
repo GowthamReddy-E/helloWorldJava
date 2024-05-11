@@ -1,32 +1,34 @@
 pipeline {
     agent any
 
-    environment {
-        // Specify the Maven installation directory
-        MAVEN_HOME = '/Users/gowe/Downloads/apache-maven-3.5.0'
-        // Update the PATH to include Maven binary directory
-        PATH = "${MAVEN_HOME}/bin:${env.PATH}"
-    }
-
     stages {
         stage('Clean') {
             steps {
-                // Execute clean using Maven executable
-                sh "${MAVEN_HOME}/bin/mvn clean"
+                // Run 'mvn clean' using specified Maven installation
+                script {
+                    tool 'maven_3_9_6'
+                    sh 'mvn clean'
+                }
             }
         }
 
         stage('Test') {
             steps {
-                // Execute test using Maven executable
-                sh "${MAVEN_HOME}/bin/mvn test"
+                // Run 'mvn test' using specified Maven installation
+                script {
+                    tool 'maven_3_9_6'
+                    sh 'mvn test'
+                }
             }
         }
 
         stage('Install') {
             steps {
-                // Execute install using Maven executable
-                sh "${MAVEN_HOME}/bin/mvn install"
+                // Run 'mvn install' using specified Maven installation
+                script {
+                    tool 'maven_3_9_6'
+                    sh 'mvn install'
+                }
             }
         }
 
@@ -39,16 +41,13 @@ pipeline {
 
         stage('Transfer Artifacts to FTP Server') {
             steps {
+                // Transfer artifacts to FTP server
                 script {
-                    // Use sshagent to execute SSH commands
-                    sshagent(credentials: ['AgentOneServer'], ignoreMissing: true) {
-                        sh '''
-                            ssh -o StrictHostKeyChecking=no root@192.168.17.130 &&
-                            scp -o StrictHostKeyChecking=no ./target/helloworldjava-1.4-SNAPSHOT.jar root@192.168.17.130:/home/
-                        '''
-                    }
+                    tool 'maven_3_9_6'
+                    sh 'mvn deploy'
                 }
             }
         }
     }
 }
+
