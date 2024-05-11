@@ -1,9 +1,10 @@
 pipeline {
-    agent any
+    agent any 
 
     environment {
-        MAVEN_HOME = '/path/to/your/maven/apache-maven-3.9.6' // Specify the Maven installation directory
+        MAVEN_HOME = '/Users/gowe/Downloads/apache-maven-3.9.6'
         PATH = "${MAVEN_HOME}/bin:${env.PATH}"
+        JAVA_HOME = '/Users/gowe/Library/Java/JavaVirtualMachines/corretto-18.0.2/Contents/Home'
     }
 
     stages {
@@ -14,24 +15,26 @@ pipeline {
             }
         }
 
-        stage('Test') {
-            steps {
-                // Run 'mvn test'
-                sh 'mvn test'
-            }
-        }
-
         stage('Install') {
             steps {
-                // Run 'mvn install'
-                sh 'mvn install'
+                // Run 'mvn deploy'
+                sh 'mvn deploy'
             }
         }
 
         stage('Publish HTML Reports') {
             steps {
                 // Publish HTML reports
-                publishHTML(allowMissing: false, alwaysLinkToLastBuild: true, keepAll: true, reportDir: './target/surefire-reports/', reportFiles: 'index.html', reportName: 'HelloWorld HTML Report')
+                script {
+                    publishHTML(
+                        allowMissing: false,
+                        alwaysLinkToLastBuild: true,
+                        keepAll: true,
+                        reportDir: './target/surefire-reports/',
+                        reportFiles: 'index.html',
+                        reportName: 'HelloWorld HTML Report'
+                    )
+                }
             }
         }
 
@@ -39,7 +42,23 @@ pipeline {
             steps {
                 // Transfer artifacts to FTP server
                 script {
-                    sh 'mvn deploy'
+                    sshagent(credentials: ['AgentOneServer'], ignoreMissing: true) {
+                        sh '''
+                            ssh -o StrictHostKeyChecking=no root@10.196.153.7 &&
+                            scp -o StrictHostKeyChecking=no ./target/helloworldjava-1.4-SNAPSHOT.jar root@10.196.153.7:/home/Jenkins
+                        '''
+                    }
+                }
+            }
+        }
+
+        stage('Upload to Artifactory') {
+            steps {
+                // Upload artifacts to Artifactory
+                script {
+                    withCredentials([string(credentialsId: 'JFrogTocken', variable: 'ACCESS_TOKEN')]) {
+                        sh "jfrog rt upload --url ${ARTIFACTORY_URL} --access-token ${ACCESS_TOKEN} ${ARTIFACT_PATH} ${TARGET_REPO}"
+                    }
                 }
             }
         }
